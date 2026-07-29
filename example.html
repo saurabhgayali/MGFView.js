@@ -1,0 +1,1752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MGFView.js - Interactive MGF Viewer</title>
+    <link rel="stylesheet" href="./css/mgfview.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (max-width: 900px) {
+            .spectrumContentWrapper {
+                flex-wrap: wrap !important;
+            }
+            .spectrumContentWrapper div[style*="flex: 0 0"] {
+                flex: 1 1 100% !important;
+                min-width: unset !important;
+            }
+        }
+    </style>
+
+    <!-- MGFView.js Library - Single file -->
+    <script src="./mgfview.js"></script>
+</head>
+<body>
+    <div class="mgf-container">
+        <header class="mgf-header">
+            <h1><img src="logo.jpg" alt="MGFView Logo" class="logo"> MGFView.js</h1>
+            <p>Interactive Mascot Generic Format (MGF) File Viewer</p>
+            <p class="mgf-header-links">
+                <a href="https://github.com/saurabhgayali/MGFView.js" target="_blank" class="mgf-header-link">GitHub Repository</a> | 
+                <a href="doc/index.html" class="mgf-header-link">Documentation</a> | 
+                <a href="index.html" class="mgf-header-link">Home</a>
+            </p>
+        </header>
+
+        <div class="mgf-controls">
+            <div class="mgf-control-group">
+                <label>Load Example:</label>
+                <select id="exampleSelect">
+                    <option value="">-- Select an example file --</option>
+                    <option value="small.mgf">Small (5 spectra)</option>
+                    <option value="medium.mgf">Medium (20 spectra)</option>
+                    <option value="large.mgf">Large (100+ spectra)</option>
+                    <option value="Metabolomics.mgf">Metabolomics</option>
+                    <option value="spectral.mgf">Spectral Library</option>
+                </select>
+                <button id="loadExampleBtn">Load</button>
+            </div>
+
+            <div class="mgf-control-group">
+                <label>Upload MGF:</label>
+                <input type="file" id="fileInput" accept=".mgf,.txt" />
+            </div>
+
+            <div id="messageBox"></div>
+
+            <!-- File Statistics Panel -->
+            <div id="statsPanel" class="mgf-stats-panel">
+                <h3 class="mgf-panel-header">📊 File Statistics</h3>
+                <div id="statsContent" class="mgf-stats-grid"></div>
+            </div>
+
+            <!-- Distribution Chart Panel -->
+            <div id="distributionPanel" class="mgf-distribution-panel">
+                <h3 class="mgf-panel-header">📊 Peak Distribution</h3>
+                <canvas id="distributionCanvas" class="mgf-distribution-canvas"></canvas>
+                <!-- Distribution Export Buttons -->
+                <div class="mgf-button-row">
+                    <button id="exportDistributionPNG" class="mgf-export-btn">📥 PNG</button>
+                    <button id="exportDistributionSVG" class="mgf-export-btn">📥 SVG</button>
+                    <button id="exportDistributionHTML" class="mgf-export-btn">📥 HTML</button>
+                    <button id="exportDistributionCSV" class="mgf-export-btn">📊 CSV</button>
+                </div>
+            </div>
+
+            <!-- Data Export -->
+            <div id="exportPanel" class="mgf-export-panel">
+                <div class="mgf-section-title">💾 Data Export</div>
+                <div class="mgf-control-group mgf-button-group">
+                    <button id="exportJSON" class="mgf-export-btn">All JSON</button>
+                    <button id="exportCSV" class="mgf-export-btn">All CSV</button>
+                    <button id="exportMGF" class="mgf-export-btn">All MGF</button>
+                    <button id="exportSpecJSON" class="mgf-export-btn">Spectrum JSON</button>
+                    <button id="exportSpecCSV" class="mgf-export-btn">Spectrum CSV</button>
+                </div>
+            </div>
+
+            </div>
+
+            <!-- Search and Filter Panel -->
+            <div id="searchPanel" class="mgf-search-panel">
+                <div class="mgf-section-title-search">🔍 Search & Filter</div>
+                
+                <div class="mgf-control-group">
+                    <label>Title:</label>
+                    <input type="text" id="searchTitle" placeholder="Search title..." class="mgf-search-input">
+                    <button id="clearSearchBtn" class="mgf-clear-btn">Clear</button>
+                </div>
+
+                <div class="mgf-control-group">
+                    <label>Precursor m/z:</label>
+                    <input type="number" id="searchMass" placeholder="m/z" step="0.01" class="mgf-search-input-medium">
+                    <input type="number" id="searchMassTol" placeholder="±Da" value="5" step="0.1" class="mgf-search-input-small">
+                </div>
+
+                <div class="mgf-control-group">
+                    <label>Charge State:</label>
+                    <select id="searchCharge" class="mgf-search-select">
+                        <option value="">Any Charge</option>
+                        <option value="1">1+</option>
+                        <option value="2">2+</option>
+                        <option value="3">3+</option>
+                        <option value="4">4+</option>
+                    </select>
+                </div>
+
+                <div class="mgf-control-group">
+                    <label>RT Range (min):</label>
+                    <input type="number" id="searchRTMin" placeholder="Min" step="0.1" class="mgf-search-input-small">
+                    <input type="number" id="searchRTMax" placeholder="Max" step="0.1" class="mgf-search-input-small">
+                </div>
+
+                <div id="scanFilterGroup" class="mgf-control-group" style="display: none;">
+                    <label>Scan Number:</label>
+                    <input type="number" id="searchScan" placeholder="Scan #" class="mgf-search-input">
+                </div>
+
+                <div id="peakFilterGroup" class="mgf-control-group" style="display: none;">
+                    <label>Min Peaks:</label>
+                    <input type="number" id="searchMinPeaks" placeholder="Min peak count" min="1" class="mgf-search-input">
+                </div>
+
+                <div id="filterResults" class="mgf-filter-results"></div>
+            </div>
+        </div>
+
+        <div class="mgf-viewer" id="viewer" style="display:none;">
+            <div class="mgf-spectrum-list" id="spectrumList"></div>
+            <div class="mgf-spectrum-wrapper">
+                <!-- Spectrum content -->
+                <div id="spectrumContent" class="mgf-spectrum-content-full">
+                    <div id="plotContainer" class="mgf-plot-container-full"></div>
+                    
+                    <!-- Export Spectrum Buttons -->
+                    <div class="mgf-export-toolbar">
+                        <button id="exportSpectrumPNG" class="mgf-export-btn">📥 PNG</button>
+                        <button id="exportSpectrumSVG" class="mgf-export-btn">📥 SVG</button>
+                        <button id="exportSpectrumHTML" class="mgf-export-btn">📥 HTML</button>
+                        <button id="exportSpectrumCSV" class="mgf-export-btn">📊 CSV</button>
+                    </div>
+
+                    <div id="spectrumDetails" class="mgf-spectrum-details"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mgf-empty-state" id="emptyState">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+                <line x1="9" y1="18" x2="15" y2="18"></line>
+            </svg>
+            <h2>No MGF file loaded</h2>
+            <p>Select an example file or upload your own MGF file to begin</p>
+        </div>
+    </div>
+
+    <script>
+        const parser = new MGFParser();
+        const search = new SearchFilter({caseSensitive: false, fuzzyMatch: false});
+        const statsPanel = new StatisticsPanel({histogramBins: 15});
+        const exporter = new ExportManager();
+        let currentSpectrumIndex = 0;
+        let filteredIndices = [];
+        let allSpectra = [];
+        let currentPlotInstance = null;  // PERSISTENT: Single plot instance reused for all spectra
+
+        // DOM elements
+        const exampleSelect = document.getElementById('exampleSelect');
+        const loadExampleBtn = document.getElementById('loadExampleBtn');
+        const fileInput = document.getElementById('fileInput');
+        const messageBox = document.getElementById('messageBox');
+        const statsBox = document.getElementById('statsPanel');
+        const statsContent = document.getElementById('statsContent');
+        const viewerContainer = document.getElementById('viewer');
+        const emptyState = document.getElementById('emptyState');
+        const spectrumContent = document.getElementById('spectrumContent');
+        const plotContainer = document.getElementById('plotContainer');
+        const spectrumDetails = document.getElementById('spectrumDetails');
+        const exportPanel = document.getElementById('exportPanel');
+        const exportJSON = document.getElementById('exportJSON');
+        const exportCSV = document.getElementById('exportCSV');
+        const exportMGF = document.getElementById('exportMGF');
+        const exportSpecJSON = document.getElementById('exportSpecJSON');
+        const exportSpecCSV = document.getElementById('exportSpecCSV');
+        const spectrumList = document.getElementById('spectrumList');
+        const searchPanel = document.getElementById('searchPanel');
+        const searchTitle = document.getElementById('searchTitle');
+        const searchMass = document.getElementById('searchMass');
+        const searchMassTol = document.getElementById('searchMassTol');
+        const searchCharge = document.getElementById('searchCharge');
+        const searchRTMin = document.getElementById('searchRTMin');
+        const searchRTMax = document.getElementById('searchRTMax');
+        const searchScan = document.getElementById('searchScan');
+        const searchMinPeaks = document.getElementById('searchMinPeaks');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const filterResults = document.getElementById('filterResults');
+        const scanFilterGroup = document.getElementById('scanFilterGroup');
+        const peakFilterGroup = document.getElementById('peakFilterGroup');
+
+        // Initialize load button disabled state
+        loadExampleBtn.disabled = true;
+
+        // Load example file
+        loadExampleBtn.addEventListener('click', async () => {
+            const filename = exampleSelect.value;
+            
+            if (!filename) {
+                showMessage('Please select an example file', 'error');
+                return;
+            }
+
+            try {
+                showMessage('Loading...', 'info');
+                const response = await fetch(`./example/${filename}`);
+                if (!response.ok) throw new Error('File not found');
+                
+                const content = await response.text();
+                
+                // Load as string
+                const result = parser.loadString(content);
+                
+                showSuccess(`Loaded ${result.count} spectra from ${filename}`);
+                cleanupViewer();  // Reset state before showing new dataset
+                displayData();
+            } catch (error) {
+                showMessage(`Error loading file: ${error.message}`, 'error');
+            }
+        });
+
+        // Load uploaded file
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            
+            if (!file) return;
+
+            try {
+                showMessage('Loading...', 'info');
+                
+                // Load as Blob (File is a Blob)
+                const result = await parser.loadBlob(file);
+                
+                showSuccess(`Loaded ${result.count} spectra from ${file.name}`);
+                cleanupViewer();  // Reset state before showing new dataset
+                displayData();
+            } catch (error) {
+                showMessage(`Error reading file: ${error.message}`, 'error');
+            }
+        });
+
+        // Enable/disable load button based on dropdown selection
+        exampleSelect.addEventListener('change', () => {
+            loadExampleBtn.disabled = !exampleSelect.value;
+        });
+
+        function displayData() {
+            const spectrumCount = parser.getSpectrumCount();
+            
+            if (spectrumCount === 0) {
+                viewerContainer.style.display = 'none';
+                emptyState.style.display = 'flex';
+                return;
+            }
+
+            viewerContainer.style.display = 'grid';
+            emptyState.style.display = 'none';
+            
+            // Wait for viewer container to have valid layout before proceeding
+            waitForValidLayout(viewerContainer).then(() => {
+                diagnosticDOMLayout(viewerContainer, 'VIEWER READY');
+                
+                // Reacquire plotContainer reference (may be stale)
+                const currentPlotContainer = document.getElementById('plotContainer');
+                if (currentPlotContainer) {
+                    diagnosticDOMLayout(currentPlotContainer, 'PLOT CONTAINER');
+                    
+                    // Check if plotContainer still has issues
+                    const rect = currentPlotContainer.getBoundingClientRect();
+                    if (rect.width === 0 || rect.height === 0) {
+                        return;
+                    }
+                }
+
+                // Display statistics - analyze distributions first
+                const spectra = parser.getSpectra();
+                
+                // Analyze for detailed statistics including distributions
+                if (spectra.length > 0) {
+                    statsPanel.analyze(spectra);
+                }
+                
+                const stats = statsPanel.getStatistics();
+                displayStats(stats);
+
+                // Display spectrum list
+                spectrumList.innerHTML = '';
+                parser.getSpectra().forEach((spectrum, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'mgf-spectrum-item';
+                    if (index === 0) item.classList.add('active');
+
+                    const title = spectrum.metadata.TITLE || 'Untitled';
+                    item.innerHTML = `
+                        <div class="number">Spectrum ${index + 1}</div>
+                        <div class="title" title="${title}">${title}</div>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.mgf-spectrum-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        currentSpectrumIndex = index;
+                        displaySpectrum(index);
+                    });
+
+                    spectrumList.appendChild(item);
+                });
+
+                // Display first spectrum
+                displaySpectrum(0);
+                
+                // Initialize search and export UI
+                initializeSearchUI();
+            }).catch(err => {
+            });
+        }
+
+        // MGFViewer is not used in this example - example.html has its own rendering system
+        // The static HTML structure (plotContainer, spectrumContent, etc.) must be preserved
+        
+        function diagnosticDOMLayout(element, label) {
+            
+            let current = element;
+            let depth = 0;
+            let zeroFound = false;
+            
+            while (current && depth < 15) {
+                const style = window.getComputedStyle(current);
+                const rect = current.getBoundingClientRect();
+                const indent = '  '.repeat(depth);
+                
+                const tag = current.tagName?.toLowerCase() || 'unknown';
+                const id = current.id ? `#${current.id}` : '';
+                const className = current.className ? `.${current.className.split(' ').filter(c => !c.includes('mgf')).join('.')}` : '';
+                
+                const hasZero = rect.width === 0 || rect.height === 0;
+                if (hasZero) zeroFound = true;
+                
+                const marker = hasZero ? '❌' : '✅';
+                if (style.display.includes('flex') || style.display.includes('grid')) {
+                }
+                
+                current = current.parentElement;
+                depth++;
+            }
+            
+            if (zeroFound) {
+            }
+        }
+        
+        function waitForValidLayout(element, maxWait = 2000) {
+            return new Promise((resolve, reject) => {
+                const startTime = Date.now();
+                
+                const check = () => {
+                    const rect = element.getBoundingClientRect();
+                    if (rect.width > 0 && rect.height > 0) {
+                        resolve();
+                        return;
+                    }
+                    
+                    if (Date.now() - startTime > maxWait) {
+                        diagnosticDOMLayout(element, 'TIMEOUT - Layout still zero');
+                        reject(new Error('Layout timeout'));
+                        return;
+                    }
+                    
+                    requestAnimationFrame(check);
+                };
+                
+                check();
+            });
+        }
+        
+        // Helper function to format metadata values
+        function formatMetadataValue(key, value) {
+            if (!value) return '—';
+            
+            // Format PEPMASS
+            if (key === 'PEPMASS' || key === 'PRECURSORMZ') {
+                if (typeof value === 'object' && value.mz) {
+                    return `${parseFloat(value.mz).toFixed(4)} m/z` + 
+                           (value.intensity ? ` (int: ${parseFloat(value.intensity).toFixed(0)})` : '');
+                }
+                return `${parseFloat(value).toFixed(4)} m/z`;
+            }
+            
+            // Format CHARGE
+            if (key === 'CHARGE' || key === 'PRECURSORCHARGE') {
+                if (typeof value === 'object' && value.charge) {
+                    return `${value.charge}+`;
+                }
+                return String(value) + '+';
+            }
+            
+            // Format RT/RTINSECONDS
+            if (key === 'RTINSECONDS' || key === 'RT') {
+                const seconds = typeof value === 'string' ? parseFloat(value) : value;
+                if (isNaN(seconds)) return String(value);
+                const minutes = (seconds / 60).toFixed(2);
+                return `${minutes} min`;
+            }
+            
+            // Handle array/object values
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            
+            return String(value);
+        }
+
+        // ============ CLEANUP & LIFECYCLE MANAGEMENT ============
+
+        function cleanupViewer() {
+            
+            // 1. Destroy and remove the plot instance
+            if (currentPlotInstance) {
+                try {
+                    currentPlotInstance.destroy();
+                } catch (e) {
+                }
+                currentPlotInstance = null;
+            }
+
+            // 2. Clear plot container
+            const plotContainer = document.getElementById('plotContainer');
+            if (plotContainer) {
+                plotContainer.innerHTML = '';
+            }
+
+            // 3. Clear details container
+            const spectrumDetails = document.getElementById('spectrumDetails');
+            if (spectrumDetails) {
+                spectrumDetails.innerHTML = '';
+            }
+
+            // 4. Reset state variables
+            currentSpectrumIndex = 0;
+            filteredIndices = [];
+            allSpectra = [];
+
+            // 5. Clear DOM elements
+            const spectrumList = document.getElementById('spectrumList');
+            if (spectrumList) {
+                spectrumList.innerHTML = '';
+            }
+
+            const statisticsContent = document.getElementById('statisticsContent');
+            if (statisticsContent) {
+                statisticsContent.innerHTML = '';
+            }
+
+        }
+
+        function displaySpectrum(index) {
+            
+            // CRITICAL: Reacquire DOM references (may be recreated)
+            const currentPlotContainer = document.getElementById('plotContainer');
+            const currentSpectrumDetails = document.getElementById('spectrumDetails');
+            
+            if (!currentPlotContainer || !document.body.contains(currentPlotContainer)) {
+                return;
+            }
+            if (!currentSpectrumDetails || !document.body.contains(currentSpectrumDetails)) {
+                return;
+            }
+            
+            const spectrum = parser.getSpectrum(index);
+
+            // Plot lifecycle: Create once, reuse for all spectra
+            if (spectrum.peaks && spectrum.peaks.length > 0) {
+                
+                waitForValidLayout(currentPlotContainer).then(() => {
+                    
+                    try {
+                        const rect = currentPlotContainer.getBoundingClientRect();
+                        
+                        if (rect.width === 0 || rect.height === 0) {
+                            diagnosticDOMLayout(currentPlotContainer, 'ZERO DIMENSIONS');
+                            return;
+                        }
+                        
+                        // CREATE plot instance on FIRST load only
+                        if (!currentPlotInstance) {
+                            currentPlotInstance = new SpectrumPlot(currentPlotContainer);
+                        } else {
+                        }
+
+                        // ALWAYS call setSpectrum to update the plot with new data
+                        currentPlotInstance.setSpectrum(spectrum);
+                        
+                    } catch (e) {
+                        currentPlotContainer.innerHTML = `<div class="mgf-error-message">❌ Error: ${e.message}</div>`;
+                    }
+                }).catch(err => {
+                    diagnosticDOMLayout(currentPlotContainer, 'LAYOUT TIMEOUT');
+                });
+            } else {
+                currentPlotContainer.innerHTML = '<div class="mgf-no-peaks">No peaks to display</div>';
+            }
+
+            // Build metadata and peaks HTML
+            let html = '';
+            
+            // Title section (if available)
+            if (spectrum.metadata.TITLE) {
+                html += `
+                    <div class="mgf-spectrum-title-section">
+                        <h3 class="mgf-spectrum-title">
+                            ${escapeHtml(spectrum.metadata.TITLE)}
+                        </h3>
+                        <div class="mgf-spectrum-number">Spectrum ${index + 1}</div>
+                    </div>
+                `;
+            }
+
+            // Metadata section (clean two-column table) - 33% width
+            let metadataHtml = '';
+            if (Object.keys(spectrum.metadata).length > 0) {
+                metadataHtml = `
+                    <div class="mgf-metadata-container">
+                        <h3 class="mgf-section-header">
+                            📋 Metadata
+                        </h3>
+                        <table class="mgf-metadata-table">
+                `;
+                
+                for (const [key, value] of Object.entries(spectrum.metadata)) {
+                    if (key === 'TITLE') continue;
+                    
+                    const displayValue = formatMetadataValue(key, value);
+                    metadataHtml += `
+                        <tr class="mgf-metadata-row">
+                            <td class="mgf-metadata-key">${escapeHtml(key)}</td>
+                            <td class="mgf-metadata-value">${escapeHtml(displayValue)}</td>
+                        </tr>
+                    `;
+                }
+                metadataHtml += '</table></div>';
+            }
+
+            // Peaks section - 66% width
+            let peaksHtml = '';
+            if (spectrum.peaks && spectrum.peaks.length > 0) {
+                peaksHtml = `
+                    <div class="mgf-peaks-container" id="peaksContainer_${index}" data-peaks-index="${index}">
+                        <h3 class="mgf-section-header">
+                            📊 Peaks (${spectrum.peaks.length} total)
+                        </h3>
+                        <div class="mgf-peaks-scroll">
+                            <table class="mgf-peaks-table peaksTable_${index}">
+                                <thead style="position: sticky; top: 0; background: #f9f9f9; border-bottom: 2px solid #e0e0e0;">
+                                    <tr>
+                <th class="mgf-sortable-header" onclick="sortPeaksTable(${index}, 'mz')">m/z <span class="sortArrow_${index}_mz"></span></th>
+                                        <th class="mgf-sortable-header" onclick="sortPeaksTable(${index}, 'intensity')">Intensity <span class="sortArrow_${index}_intensity"></span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                spectrum.peaks.forEach((peak, idx) => {
+                    const rowClass = idx % 2 === 0 ? 'mgf-table-row-even' : 'mgf-table-row-odd';
+                    peaksHtml += `
+                        <tr class="${rowClass}">
+                            <td class="mgf-table-cell">${peak.mz.toFixed(4)}</td>
+                            <td class="mgf-table-cell">${peak.intensity.toFixed(0)}</td>
+                        </tr>
+                    `;
+                });
+
+                peaksHtml += `</tbody></table></div>
+                        <div class="mgf-peaks-export">
+                            <button id="exportPeaksCSV" class="mgf-export-btn">📋 Export Peaks</button>
+                        </div>
+                    </div>`;
+            }
+
+            // Combine metadata and peaks in a two-column layout (33% and 66%)
+            if (metadataHtml || peaksHtml) {
+                html += `
+                    <div class="mgf-spectrum-content-wrapper spectrumContentWrapper">
+                        ${metadataHtml}
+                        ${peaksHtml}
+                    </div>
+                `;
+            }
+
+            currentSpectrumDetails.innerHTML = html || '<div class="mgf-no-data">No data available</div>';
+        }
+
+        function displayStats(stats) {
+            let html = '';
+            
+            // Create stat cards with grey background
+            const minPeaks = stats.stats && stats.stats.peaks ? stats.stats.peaks.min : 0;
+            const maxPeaks = stats.stats && stats.stats.peaks ? stats.stats.peaks.max : 0;
+            const avgPeaks = stats.spectraCount > 0 ? (stats.totalPeaks / stats.spectraCount) : 0;
+            
+            // Calculate average precursor mass if data available
+            let avgPrecursorMass = null;
+            if (stats.stats && stats.stats.precursorMasses && stats.stats.precursorMasses.mean !== undefined) {
+                avgPrecursorMass = stats.stats.precursorMasses.mean;
+            }
+            
+            const statData = [
+                { label: 'Total Spectra', value: stats.spectraCount },
+                { label: 'Total Peaks', value: stats.totalPeaks.toLocaleString() },
+                { label: 'Avg Peaks/Spectrum', value: avgPeaks.toFixed(1) },
+                { label: 'Min Peaks', value: minPeaks },
+                { label: 'Max Peaks', value: maxPeaks }
+            ];
+            
+            if (avgPrecursorMass !== null) {
+                statData.push({ label: 'Avg Precursor Mass', value: avgPrecursorMass.toFixed(2) });
+            }
+            
+            statData.forEach(stat => {
+                html += `
+                    <div class="mgf-stat-card-grid">
+                        <div class="mgf-stat-label-inline">${stat.label}</div>
+                        <div class="mgf-stat-value-inline">${stat.value}</div>
+                    </div>
+                `;
+            });
+
+            statsContent.innerHTML = html;
+            statsBox.style.display = 'block';
+            
+            // Render distribution chart using Canvas
+            const statsData = statsPanel.getStatistics();
+            const distributionPanel = document.getElementById('distributionPanel');
+            const canvas = document.getElementById('distributionCanvas');
+            
+            if (statsData && statsData.peakDistribution && statsData.peakDistribution.length > 0) {
+                // Make panel visible first so dimensions are calculated
+                distributionPanel.style.display = 'block';
+                
+                // Force layout recalculation
+                distributionPanel.offsetWidth;
+                
+                // Now render
+                renderDistributionCanvas(canvas, statsData.peakDistribution);
+            }
+        }
+
+        // Peaks table sorting state
+        const peaksSortState = {};
+
+        function sortPeaksTable(spectrumIndex, column) {
+            const table = document.querySelector(`.peaksTable_${spectrumIndex}`);
+            if (!table) return;
+
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // Get current sort state
+            const key = `spectrum_${spectrumIndex}_${column}`;
+            const currentSort = peaksSortState[key];
+            
+            // Determine sort direction (asc by default, desc if was asc, then reset)
+            let sortDir = 'asc';
+            if (currentSort === 'asc') {
+                sortDir = 'desc';
+            }
+
+            // Sort rows
+            rows.sort((a, b) => {
+                let aVal, bVal;
+                if (column === 'mz') {
+                    aVal = parseFloat(a.cells[0].textContent);
+                    bVal = parseFloat(b.cells[0].textContent);
+                } else {
+                    aVal = parseFloat(a.cells[1].textContent);
+                    bVal = parseFloat(b.cells[1].textContent);
+                }
+
+                if (sortDir === 'asc') {
+                    return aVal - bVal;
+                } else {
+                    return bVal - aVal;
+                }
+            });
+
+            // Re-append sorted rows
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Update sort indicators
+            const mzArrow = document.querySelector(`.sortArrow_${spectrumIndex}_mz`);
+            const intensityArrow = document.querySelector(`.sortArrow_${spectrumIndex}_intensity`);
+            
+            if (mzArrow) mzArrow.textContent = '';
+            if (intensityArrow) intensityArrow.textContent = '';
+
+            if (column === 'mz' && mzArrow) {
+                mzArrow.textContent = sortDir === 'asc' ? ' ▲' : ' ▼';
+            } else if (column === 'intensity' && intensityArrow) {
+                intensityArrow.textContent = sortDir === 'asc' ? ' ▲' : ' ▼';
+            }
+
+            // Update sort state
+            peaksSortState[key] = sortDir;
+        }
+
+        let distributionHoverData = null;
+
+        function renderDistributionCanvas(canvas, distribution) {
+            if (!canvas) return;
+            
+            // Get the canvas container (distributionPanel)
+            const container = canvas.parentElement;
+            
+            // Use clientWidth to get the actual available width (excluding padding)
+            // If on initial load, fall back to calculating from window width
+            let containerWidth = container.clientWidth;
+            
+            if (!containerWidth || containerWidth < 100) {
+                // Fallback: calculate based on window width - sidebar
+                const sidebarWidth = 250; // From CSS grid-template-columns
+                containerWidth = window.innerWidth - sidebarWidth - 60; // -60 for padding
+            }
+            
+            // Use full container width for distribution chart
+            const canvasWidth = containerWidth;
+            const canvasHeight = 300;
+            
+            // Store distribution data for hover tooltips
+            distributionHoverData = { distribution, canvasWidth, canvasHeight };
+            
+            // Set canvas size
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = canvasWidth * dpr;
+            canvas.height = canvasHeight * dpr;
+            
+            // Set CSS dimensions for display
+            canvas.style.width = canvasWidth + 'px';
+            canvas.style.height = canvasHeight + 'px';
+            
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+            
+            // Draw white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            
+            const dist = distribution;
+            const maxCount = Math.max(...dist.map(d => d.count));
+            
+            // Chart dimensions (in CSS pixels, not device pixels)
+            const chartX = 60;
+            const chartY = 30;
+            const chartWidth = canvasWidth - 100;
+            const chartHeight = 220;
+            
+            // Draw title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('Peaks per Spectrum Distribution', chartX, chartY - 10);
+            
+            // Draw chart border
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(chartX, chartY, chartWidth, chartHeight);
+            
+            // Draw Y axis label
+            ctx.save();
+            ctx.translate(20, chartY + chartHeight / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillStyle = '#999';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Count', 0, 0);
+            ctx.restore();
+            
+            // Draw X axis label
+            ctx.fillStyle = '#999';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Peak Count Ranges', chartX + chartWidth / 2, canvasHeight - 5);
+            
+            // Draw bars
+            const barWidth = chartWidth / dist.length;
+            dist.forEach((item, idx) => {
+                const height = (item.count / maxCount) * chartHeight;
+                const x = chartX + (idx * barWidth);
+                const y = chartY + (chartHeight - height);
+                
+                // Draw bar
+                ctx.fillStyle = '#b0b0b0';
+                ctx.fillRect(x + 2, y, barWidth - 4, height);
+                
+                // Draw border
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 2, y, barWidth - 4, height);
+                
+                // Draw label below
+                const label = `${item.min.toFixed(0)}-${item.max.toFixed(0)}`;
+                ctx.fillStyle = '#999';
+                ctx.font = '9px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, x + barWidth / 2, chartY + chartHeight + 15);
+                
+                // Draw count on bar if height is large enough
+                if (height > 20) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(item.count, x + barWidth / 2, y + 15);
+                }
+            });
+            
+            // Add hover tooltip listener
+            if (canvas.tooltipListener) {
+                canvas.removeEventListener('mousemove', canvas.tooltipListener);
+            }
+            
+            canvas.tooltipListener = function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                if (!distributionHoverData) return;
+                
+                const { distribution: dist, canvasWidth, canvasHeight } = distributionHoverData;
+                const chartX = 60;
+                const chartY = 30;
+                const chartWidth = canvasWidth - 100;
+                const chartHeight = 220;
+                const barWidth = chartWidth / dist.length;
+                
+                // Check if hovering over a bar
+                for (let idx = 0; idx < dist.length; idx++) {
+                    const barX = chartX + (idx * barWidth);
+                    const barY = chartY;
+                    
+                    if (x >= barX && x < barX + barWidth && y >= barY && y < barY + chartHeight) {
+                        const item = dist[idx];
+                        const tooltip = `Range: ${item.min.toFixed(0)}-${item.max.toFixed(0)}\nCount: ${item.count}`;
+                        canvas.title = tooltip;
+                        return;
+                    }
+                }
+                
+                canvas.title = '';
+            };
+            
+            canvas.addEventListener('mousemove', canvas.tooltipListener);
+        }
+
+        function showMessage(msg, type) {
+            messageBox.innerHTML = `<div class="mgf-message ${type}">${escapeHtml(msg)}</div>`;
+        }
+
+        function showSuccess(msg) {
+            messageBox.innerHTML = `<div class="mgf-message mgf-success">✓ ${escapeHtml(msg)}</div>`;
+        }
+
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // ============ SEARCH & FILTER FUNCTIONALITY ============
+
+        function initializeSearchUI() {
+            const spectra = parser.getSpectra();
+            if (spectra.length === 0) return;
+
+            // Check for available metadata fields and show/hide filters accordingly
+            let hasScanData = false;
+            spectra.forEach(spec => {
+                if (spec.metadata.SCANS !== undefined) {
+                    hasScanData = true;
+                }
+            });
+            
+            scanFilterGroup.style.display = hasScanData ? 'flex' : 'none';
+            peakFilterGroup.style.display = 'flex';  // Always show peak filter
+
+            // Set RT range
+            const rtRange = SearchFilter.getRTRange(spectra);
+            if (rtRange.hasRtData) {
+                searchRTMin.min = rtRange.min.toFixed(1);
+                searchRTMax.min = rtRange.min.toFixed(1);
+                searchRTMin.max = rtRange.max.toFixed(1);
+                searchRTMax.max = rtRange.max.toFixed(1);
+            }
+
+            // Show search panel
+            searchPanel.style.display = 'block';
+            exportPanel.style.display = 'block';
+            
+            // Show and render detailed statistics accordion
+            const detailedStatsPanel = document.getElementById('detailedStatsPanel');
+            if (detailedStatsPanel) {
+                detailedStatsPanel.style.display = 'block';
+                displayDetailedStatistics();
+            }
+        }
+
+        function applyFilters() {
+            const spectra = parser.getSpectra();
+            const criteria = {
+                title: searchTitle.value || undefined,
+                precursorMass: searchMass.value ? parseFloat(searchMass.value) : undefined,
+                massToleranceDa: parseFloat(searchMassTol.value) || 5,
+                charge: searchCharge.value ? parseInt(searchCharge.value) : undefined,
+                rtMin: searchRTMin.value ? parseFloat(searchRTMin.value) : undefined,
+                rtMax: searchRTMax.value ? parseFloat(searchRTMax.value) : undefined,
+                scanNumber: searchScan.value ? parseInt(searchScan.value) : undefined,
+                minPeaks: searchMinPeaks.value ? parseInt(searchMinPeaks.value) : undefined
+            };
+
+            // Perform filtering
+            const results = search.filter(spectra, criteria);
+            filteredIndices = results.matched.map(r => r.index);
+
+            // Update spectrum list
+            spectrumList.innerHTML = '';
+            if (filteredIndices.length === 0) {
+                spectrumList.innerHTML = '<div class="mgf-no-data">No matches found</div>';
+                // CRITICAL: Only clear details, NOT spectrumContent (which contains plotContainer)
+                const spectrumDetails = document.getElementById('spectrumDetails');
+                if (spectrumDetails) spectrumDetails.innerHTML = '';
+            } else {
+                filteredIndices.forEach((idx, displayIdx) => {
+                    const spectrum = spectra[idx];
+                    const item = document.createElement('div');
+                    item.className = 'mgf-spectrum-item';
+                    if (displayIdx === 0) item.classList.add('active');
+
+                    const title = spectrum.metadata.TITLE || 'Untitled';
+                    item.innerHTML = `
+                        <div class="number">Spectrum ${idx + 1}</div>
+                        <div class="title" title="${title}">${title}</div>
+                    `;
+
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.mgf-spectrum-item').forEach(el => el.classList.remove('active'));
+                        item.classList.add('active');
+                        currentSpectrumIndex = idx;  // Track the selected spectrum
+                        displaySpectrum(idx);
+                    });
+
+                    spectrumList.appendChild(item);
+                });
+
+                // Display first filtered spectrum
+                displaySpectrum(filteredIndices[0]);
+            }
+
+            // Show filter results
+            const stats = search.getResultsStatistics();
+            if (stats) {
+                filterResults.textContent = `Filtered: ${stats.matchedCount}/${stats.totalSpectra} spectra (${stats.matchPercentage}%)`;
+                filterResults.style.display = 'block';
+            }
+        }
+
+        // Add event listeners for search inputs
+        searchTitle.addEventListener('input', applyFilters);
+        searchMass.addEventListener('change', applyFilters);
+        searchMassTol.addEventListener('change', applyFilters);
+        searchCharge.addEventListener('change', applyFilters);
+        searchRTMin.addEventListener('change', applyFilters);
+        searchRTMax.addEventListener('change', applyFilters);
+        searchScan.addEventListener('change', applyFilters);
+        searchMinPeaks.addEventListener('change', applyFilters);
+
+        // Clear search handler
+        clearSearchBtn.addEventListener('click', () => {
+            searchTitle.value = '';
+            searchMass.value = '';
+            searchMassTol.value = '5';
+            searchCharge.value = '';
+            searchRTMin.value = '';
+            searchRTMax.value = '';
+            searchScan.value = '';
+            searchMinPeaks.value = '';
+            filterResults.style.display = 'none';
+            filteredIndices = [];
+            displayData();
+        });
+
+        // ============ STATISTICS TAB FUNCTIONALITY ============
+
+        // ============ EXPORT GRAPH DATA AS CSV ============
+        function exportGraphCSV() {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum || !spectrum.peaks || spectrum.peaks.length === 0) {
+                showMessage('No spectrum to export', 'error');
+                return;
+            }
+
+            const title = spectrum.metadata?.TITLE || 'spectrum_' + (currentSpectrumIndex + 1);
+            let csv = 'm/z,Intensity\n';
+            spectrum.peaks.forEach(peak => {
+                csv += peak.mz.toFixed(4) + ',' + peak.intensity.toFixed(0) + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = title + '_graph.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showSuccess('Exported graph data as CSV');
+        }
+
+        // ============ EXPORT PEAKS AS CSV ============
+        function exportPeaksCSV() {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum || !spectrum.peaks || spectrum.peaks.length === 0) {
+                showMessage('No peaks to export', 'error');
+                return;
+            }
+
+            const title = spectrum.metadata?.TITLE || 'spectrum_' + (currentSpectrumIndex + 1);
+            let csv = 'm/z,Intensity\n';
+            spectrum.peaks.forEach(peak => {
+                csv += peak.mz.toFixed(4) + ',' + peak.intensity.toFixed(0) + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = title + '_peaks.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showSuccess('Exported peaks as CSV');
+        }
+
+        // ============ EXPORT DISTRIBUTION CHART AS PNG ============
+        function exportDistributionPNG() {
+            // Create a hidden canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 600;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Get distribution data from statsPanel
+            const statsData = statsPanel.getStatistics();
+            if (!statsData || !statsData.peakDistribution || statsData.peakDistribution.length === 0) {
+                showMessage('No distribution data to export', 'error');
+                return;
+            }
+            
+            const dist = statsData.peakDistribution;
+            const maxCount = Math.max(...dist.map(d => d.count));
+            
+            // Draw title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 20px Arial';
+            ctx.fillText('Peaks per Spectrum Distribution', 50, 40);
+            
+            // Draw chart area border
+            ctx.strokeStyle = '#e0e0e0';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(60, 80, 700, 400);
+            
+            // Draw Y axis label
+            ctx.save();
+            ctx.translate(20, 280);
+            ctx.rotate(-Math.PI/2);
+            ctx.fillStyle = '#999';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Count', 0, 0);
+            ctx.restore();
+            
+            // Draw X axis label
+            ctx.fillStyle = '#999';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Peak Count Ranges', 410, 560);
+            
+            // Draw bars
+            const barWidth = 700 / dist.length;
+            const chartHeight = 400;
+            dist.forEach((item, idx) => {
+                const height = (item.count / maxCount) * chartHeight;
+                const x = 60 + (idx * barWidth);
+                const y = 80 + (chartHeight - height);
+                
+                // Draw bar
+                ctx.fillStyle = '#b0b0b0';
+                ctx.fillRect(x + 5, y, barWidth - 10, height);
+                
+                // Draw border
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x + 5, y, barWidth - 10, height);
+                
+                // Draw label below
+                const label = `${item.min.toFixed(0)}-${item.max.toFixed(0)}`;
+                ctx.fillStyle = '#999';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, x + barWidth/2, 520);
+                
+                // Draw count on bar
+                if (height > 20) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = 'bold 11px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(item.count, x + barWidth/2, y + 20);
+                }
+            });
+            
+            // Draw Y axis ticks and values
+            const yValues = [0, maxCount * 0.25, maxCount * 0.5, maxCount * 0.75, maxCount];
+            yValues.forEach(val => {
+                const yPos = 80 + chartHeight - (val / maxCount) * chartHeight;
+                
+                // Tick
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(55, yPos);
+                ctx.lineTo(60, yPos);
+                ctx.stroke();
+                
+                // Value
+                ctx.fillStyle = '#999';
+                ctx.font = '9px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(val), 50, yPos + 3);
+            });
+            
+            // Download
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'distribution_chart.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showSuccess('Exported distribution chart as PNG');
+            });
+        }
+
+        // ============ EXPORT DISTRIBUTION AS SVG ============
+        function exportDistributionSVG() {
+            const statsData = statsPanel.getStatistics();
+            if (!statsData || !statsData.peakDistribution || statsData.peakDistribution.length === 0) {
+                showMessage('No distribution data to export', 'error');
+                return;
+            }
+
+            const dist = statsData.peakDistribution;
+            const maxCount = Math.max(...dist.map(d => d.count));
+            const chartHeight = 300;
+            const chartWidth = 600;
+            const barWidth = chartWidth / dist.length;
+
+            let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${chartWidth + 100}" height="${chartHeight + 150}" style="background: white;">`;
+            svg += '<style>.chart-text { font-family: Arial, sans-serif; font-size: 12px; } .chart-label { font-size: 10px; fill: #999; }</style>';
+            
+            // Title
+            svg += `<text class="chart-text" x="${chartWidth/2 + 50}" y="30" text-anchor="middle" style="font-size: 16px; font-weight: bold; fill: #333;">Peaks per Spectrum Distribution</text>`;
+            
+            // Y axis label
+            svg += `<text class="chart-text" x="20" y="${chartHeight/2 + 50}" text-anchor="middle" transform="rotate(-90 20 ${chartHeight/2 + 50})" style="fill: #999;">Count</text>`;
+            
+            // X axis label
+            svg += `<text class="chart-text" x="${chartWidth/2 + 50}" y="${chartHeight + 130}" text-anchor="middle" style="fill: #999;">Peak Count Ranges</text>`;
+            
+            // Chart area border
+            svg += `<rect x="60" y="50" width="${chartWidth}" height="${chartHeight}" fill="none" stroke="#e0e0e0" stroke-width="1"/>`;
+            
+            // Bars
+            dist.forEach((item, idx) => {
+                const height = (item.count / maxCount) * chartHeight;
+                const x = 60 + (idx * barWidth);
+                const y = 50 + (chartHeight - height);
+                const label = `${item.min.toFixed(0)}-${item.max.toFixed(0)}`;
+                
+                // Bar
+                svg += `<rect x="${x + 5}" y="${y}" width="${barWidth - 10}" height="${height}" fill="#b0b0b0" stroke="#aaa" stroke-width="1" rx="2"/>`;
+                
+                // Label below
+                svg += `<text class="chart-label" x="${x + barWidth/2}" y="${chartHeight + 75}" text-anchor="middle">${label}</text>`;
+                
+                // Count on bar
+                if (height > 25) {
+                    svg += `<text class="chart-text" x="${x + barWidth/2}" y="${y + 20}" text-anchor="middle" style="font-weight: bold; fill: white; font-size: 11px;">${item.count}</text>`;
+                }
+            });
+            
+            svg += '</svg>';
+            
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'distribution_chart.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showSuccess('Exported distribution chart as SVG');
+        }
+
+        // ============ EXPORT DISTRIBUTION AS CSV ============
+        function exportDistributionCSV() {
+            const statsData = statsPanel.getStatistics();
+            if (!statsData || !statsData.peakDistribution || statsData.peakDistribution.length === 0) {
+                showMessage('No distribution data to export', 'error');
+                return;
+            }
+
+            const dist = statsData.peakDistribution;
+            let csv = 'Range (Min Peaks),Range (Max Peaks),Count\n';
+            
+            dist.forEach(item => {
+                csv += `${item.min.toFixed(0)},${item.max.toFixed(0)},${item.count}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'distribution_chart.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showSuccess('Exported distribution chart as CSV');
+        }
+
+        // ============ EXPORT DISTRIBUTION AS INTERACTIVE HTML ============
+        function exportDistributionHTML() {
+            const statsData = statsPanel.getStatistics();
+            if (!statsData || !statsData.peakDistribution || statsData.peakDistribution.length === 0) {
+                showMessage('No distribution data to export', 'error');
+                return;
+            }
+
+            const dist = statsData.peakDistribution;
+            const maxCount = Math.max(...dist.map(d => d.count));
+            const totalCount = dist.reduce((sum, item) => sum + item.count, 0);
+            const dataJson = JSON.stringify(dist);
+
+            let html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Peak Distribution Chart</title><style>';
+            html += 'body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }';
+            html += '.container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }';
+            html += 'h1 { text-align: center; color: #333; margin-bottom: 30px; }';
+            html += '.chart-container { display: flex; align-items: flex-end; justify-content: space-around; height: 300px; margin-bottom: 30px; padding: 20px; background: #f9f9f9; border-radius: 4px; gap: 8px; border: 1px solid #e0e0e0; }';
+            html += '.bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 10px; }';
+            html += '.bar { width: 100%; background: linear-gradient(180deg, #b0b0b0 0%, #999 100%); border: 1px solid #aaa; border-radius: 4px 4px 0 0; cursor: pointer; transition: all 0.2s; position: relative; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; }';
+            html += '.bar:hover { opacity: 0.8; box-shadow: 0 2px 8px rgba(176, 176, 176, 0.3); }';
+            html += '.label { font-size: 11px; color: #999; text-align: center; width: 100%; }';
+            html += '.tooltip { position: fixed; background: #333; color: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; pointer-events: none; z-index: 1000; display: none; }';
+            html += 'table { width: 100%; border-collapse: collapse; margin-top: 30px; }';
+            html += 'th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }';
+            html += 'th { background: #f0f0f0; font-weight: 600; color: #333; }';
+            html += 'tr:hover { background: #f9f9f9; }';
+            html += '</style></head><body>';
+            html += '<div class="container"><h1>📊 Peak Distribution Chart</h1>';
+            html += '<div class="chart-container" id="chart"></div>';
+            html += '<table><thead><tr><th>Peak Range</th><th>Count</th><th>Percentage</th></tr></thead><tbody id="tableBody"></tbody></table>';
+            html += '</div><div class="tooltip" id="tooltip"></div>';
+            html += '<script>';
+            html += 'const data = ' + dataJson + ';';
+            html += 'const maxCount = ' + maxCount + ';';
+            html += 'const totalCount = ' + totalCount + ';';
+            html += 'const chart = document.getElementById("chart");';
+            html += 'const tableBody = document.getElementById("tableBody");';
+            html += 'const tooltip = document.getElementById("tooltip");';
+            html += 'data.forEach(item => {';
+            html += '  const height = (item.count / maxCount) * 100;';
+            html += '  const range = item.min.toFixed(0) + "-" + item.max.toFixed(0);';
+            html += '  const percentage = ((item.count / totalCount) * 100).toFixed(1);';
+            html += '  const barWrapper = document.createElement("div");';
+            html += '  barWrapper.className = "bar-wrapper";';
+            html += '  const bar = document.createElement("div");';
+            html += '  bar.className = "bar";';
+            html += '  bar.style.height = height + "%";';
+            html += '  bar.title = range + ": " + item.count;';
+            html += '  bar.textContent = item.count > 0 ? item.count : "";';
+            html += '  const label = document.createElement("div");';
+            html += '  label.className = "label";';
+            html += '  label.textContent = range;';
+            html += '  barWrapper.appendChild(bar);';
+            html += '  barWrapper.appendChild(label);';
+            html += '  bar.addEventListener("mouseenter", (e) => {';
+            html += '    tooltip.textContent = range + ": " + item.count + " (" + percentage + "%)";';
+            html += '    tooltip.style.display = "block";';
+            html += '  });';
+            html += '  bar.addEventListener("mousemove", (e) => {';
+            html += '    tooltip.style.left = (e.clientX + 10) + "px";';
+            html += '    tooltip.style.top = (e.clientY + 10) + "px";';
+            html += '  });';
+            html += '  bar.addEventListener("mouseleave", () => {';
+            html += '    tooltip.style.display = "none";';
+            html += '  });';
+            html += '  chart.appendChild(barWrapper);';
+            html += '  const row = document.createElement("tr");';
+            html += '  const rangeCell = document.createElement("td");';
+            html += '  const countCell = document.createElement("td");';
+            html += '  const percentCell = document.createElement("td");';
+            html += '  rangeCell.textContent = range;';
+            html += '  countCell.textContent = item.count;';
+            html += '  percentCell.textContent = percentage + "%";';
+            html += '  row.appendChild(rangeCell);';
+            html += '  row.appendChild(countCell);';
+            html += '  row.appendChild(percentCell);';
+            html += '  tableBody.appendChild(row);';
+            html += '});';
+            html += '<\/script><\/body><\/html>';
+
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'distribution_chart.html';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showSuccess('Exported distribution chart as interactive HTML');
+        }
+
+        // ============ EXPORT FUNCTIONALITY ============
+
+        exportJSON.addEventListener('click', () => {
+            const spectra = parser.getSpectra();
+            if (spectra.length === 0) {
+                showMessage('No spectra to export', 'error');
+                return;
+            }
+            exporter.downloadJSON(spectra, `spectra_${new Date().toISOString().split('T')[0]}.json`);
+            showSuccess(`Exported ${spectra.length} spectra as JSON`);
+        });
+
+        exportCSV.addEventListener('click', () => {
+            const spectra = parser.getSpectra();
+            if (spectra.length === 0) {
+                showMessage('No spectra to export', 'error');
+                return;
+            }
+            exporter.downloadCSV(spectra, `spectra_${new Date().toISOString().split('T')[0]}.csv`);
+            showSuccess(`Exported ${spectra.length} spectra as CSV`);
+        });
+
+        exportMGF.addEventListener('click', () => {
+            const spectra = parser.getSpectra();
+            if (spectra.length === 0) {
+                showMessage('No spectra to export', 'error');
+                return;
+            }
+            exporter.downloadMGF(spectra, `spectra_${new Date().toISOString().split('T')[0]}.mgf`);
+            showSuccess(`Exported ${spectra.length} spectra as MGF`);
+        });
+
+        exportSpecJSON.addEventListener('click', () => {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum) {
+                showMessage('No spectrum selected', 'error');
+                return;
+            }
+            const title = spectrum.metadata?.TITLE || `spectrum_${currentSpectrumIndex + 1}`;
+            exporter.downloadJSON([spectrum], `${title}.json`);
+            showSuccess(`Exported current spectrum as JSON`);
+        });
+
+        exportSpecCSV.addEventListener('click', () => {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum) {
+                showMessage('No spectrum selected', 'error');
+                return;
+            }
+            const title = spectrum.metadata?.TITLE || `spectrum_${currentSpectrumIndex + 1}`;
+            exporter.downloadCSV([spectrum], `${title}.csv`);
+            showSuccess(`Exported current spectrum as CSV`);
+        });
+
+        // ============ IMAGE EXPORT FUNCTIONALITY ============
+
+        function exportSpectrumPNG() {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum || !spectrum.peaks || spectrum.peaks.length === 0) {
+                showMessage('No spectrum to export', 'error');
+                return;
+            }
+
+            // Specifically target the spectrum plot canvas in plotContainer
+            const plotContainer = document.getElementById('plotContainer');
+            const canvas = plotContainer ? plotContainer.querySelector('canvas') : null;
+            if (!canvas) {
+                showMessage('Spectrum plot not rendered', 'error');
+                return;
+            }
+
+            // Export at 4x resolution for publication quality
+            const scaleFactor = 4;
+            const scaledCanvas = document.createElement('canvas');
+            scaledCanvas.width = canvas.width * scaleFactor;
+            scaledCanvas.height = canvas.height * scaleFactor;
+            
+            const ctx = scaledCanvas.getContext('2d');
+            ctx.scale(scaleFactor, scaleFactor);
+            ctx.drawImage(canvas, 0, 0);
+
+            const title = spectrum.metadata?.TITLE || `spectrum_${currentSpectrumIndex + 1}`;
+            const link = document.createElement('a');
+            link.href = scaledCanvas.toDataURL('image/png');
+            link.download = `${title}_4x.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccess('Exported spectrum as PNG (4× resolution)');
+        }
+
+        function exportSpectrumSVG() {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum || !spectrum.peaks || spectrum.peaks.length === 0) {
+                showMessage('No spectrum to export', 'error');
+                return;
+            }
+
+            // Create SVG with spectrum data
+            const width = 800;
+            const height = 400;
+            const padding = 60;
+            
+            const minMz = Math.min(...spectrum.peaks.map(p => p.mz));
+            const maxMz = Math.max(...spectrum.peaks.map(p => p.mz));
+            const maxIntensity = Math.max(...spectrum.peaks.map(p => p.intensity));
+
+            let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    text { font-family: Arial, sans-serif; font-size: 12px; }
+    .peak { stroke: #555555; stroke-width: 1; }
+    .axis { stroke: #333; stroke-width: 2; }
+    .grid { stroke: #ddd; stroke-width: 0.5; }
+  </style>
+  
+  <!-- Background -->
+  <rect width="${width}" height="${height}" fill="white"/>
+  
+  <!-- Title -->
+  <text x="${width/2}" y="25" text-anchor="middle" font-size="16" font-weight="bold">
+    ${escapeHtml(spectrum.metadata?.TITLE || 'Spectrum')}
+  </text>
+  
+  <!-- Axes -->
+  <line x1="${padding}" y1="${height-padding}" x2="${width-padding}" y2="${height-padding}" class="axis"/>
+  <line x1="${padding}" y1="${padding}" x2="${padding}" y2="${height-padding}" class="axis"/>
+  
+  <!-- Axis labels -->
+  <text x="${width/2}" y="${height-10}" text-anchor="middle">m/z</text>
+  <text x="15" y="${height/2}" text-anchor="middle" transform="rotate(-90 15 ${height/2})">Intensity</text>
+  
+  <!-- Peaks -->
+`;
+            
+            spectrum.peaks.forEach(peak => {
+                const x = padding + ((peak.mz - minMz) / (maxMz - minMz)) * (width - 2*padding);
+                const y = height - padding - (peak.intensity / maxIntensity) * (height - 2*padding);
+                svg += `  <line x1="${x}" y1="${height-padding}" x2="${x}" y2="${y}" class="peak"/>\n`;
+            });
+
+            svg += `</svg>`;
+
+            const title = spectrum.metadata?.TITLE || `spectrum_${currentSpectrumIndex + 1}`;
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${title}.svg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showSuccess('Exported spectrum as SVG');
+        }
+
+        function exportSpectrumHTML() {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum || !spectrum.peaks || spectrum.peaks.length === 0) {
+                showMessage('No spectrum to export', 'error');
+                return;
+            }
+
+            const title = spectrum.metadata?.TITLE || 'spectrum_' + (currentSpectrumIndex + 1);
+            const width = 1000;
+            const height = 500;
+            const padding = 60;
+            
+            const minMz = Math.min(...spectrum.peaks.map(p => p.mz));
+            const maxMz = Math.max(...spectrum.peaks.map(p => p.mz));
+            const maxIntensity = Math.max(...spectrum.peaks.map(p => p.intensity));
+
+            // Build HTML as string array - use single quotes to avoid nesting issues
+            const htmlLines = [];
+            htmlLines.push('<!DOCTYPE html><html><head>');
+            htmlLines.push('<meta charset=UTF-8><title>' + escapeHtml(title) + ' - Spectrum</title>');
+            htmlLines.push('<style>body{font-family:Arial;padding:20px}canvas{border:1px solid #ccc;margin:20px 0;cursor:crosshair}table{border-collapse:collapse;width:100%;margin:20px 0}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9f9f9;font-weight:bold}h3{color:#333}.tooltip{position:fixed;background:#333;color:white;padding:8px 12px;border-radius:4px;font-size:12px;z-index:1000;display:none;pointer-events:none;white-space:nowrap}</style>');
+            htmlLines.push('</head><body><h1>' + escapeHtml(title) + '</h1>');
+            htmlLines.push('<p>Interactive spectrum plot - Hover over peaks for details</p>');
+            htmlLines.push('<canvas id=canvas></canvas>');
+            htmlLines.push('<div id=tooltip class=tooltip></div>');
+            
+            // Metadata table
+            htmlLines.push('<table><tr><th>Property</th><th>Value</th></tr>');
+            for (const [key, value] of Object.entries(spectrum.metadata)) {
+                if (key !== 'TITLE') {
+                    const displayValue = formatMetadataValue(key, value);
+                    htmlLines.push('<tr><td>' + escapeHtml(key) + '</td><td>' + escapeHtml(displayValue) + '</td></tr>');
+                }
+            }
+            htmlLines.push('</table>');
+            
+            // Peaks table
+            htmlLines.push('<h3>Peaks (' + spectrum.peaks.length + ' total)</h3>');
+            htmlLines.push('<table><tr><th>m/z</th><th>Intensity</th></tr>');
+            spectrum.peaks.forEach(peak => {
+                htmlLines.push('<tr><td>' + peak.mz.toFixed(4) + '</td><td>' + peak.intensity.toFixed(0) + '</td></tr>');
+            });
+            htmlLines.push('</table>');
+            
+            // Embedded drawing script with interactive hover
+            let specJSON = JSON.stringify(spectrum);
+            let scriptCode = `
+                var c=document.getElementById('canvas'),ctx=c.getContext('2d'),spectrum=${specJSON},p=60,w=${width},h=${height},mzR=${maxMz - minMz},maxInt=${maxIntensity},minMz=${minMz};
+                var tooltip=document.getElementById('tooltip'),selectedPeak=-1;
+                
+                c.width=w;c.height=h;
+                
+                function drawSpectrum(){
+                    ctx.fillStyle='#fafafa';ctx.fillRect(0,0,w,h);
+                    var pw=w-p*2,ph=h-p*2;
+                    
+                    // Draw grid
+                    ctx.strokeStyle='#f0f0f0';ctx.lineWidth=1;
+                    for(var i=0;i<=10;i++){
+                        var y=p+i*(ph/10);ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(w-p,y);ctx.stroke();
+                    }
+                    
+                    // Draw peaks
+                    for(var i=0;i<spectrum.peaks.length;i++){
+                        var pk=spectrum.peaks[i],x=p+((pk.mz-minMz)/mzR)*pw,y=h-p-(pk.intensity/maxInt)*ph;
+                        ctx.strokeStyle=i===selectedPeak?'#ff6b6b':'#555555';
+                        ctx.lineWidth=i===selectedPeak?3:2;
+                        ctx.beginPath();ctx.moveTo(x,h-p);ctx.lineTo(x,y);ctx.stroke();
+                        if(i===selectedPeak){ctx.fillStyle='#ff6b6b';ctx.beginPath();ctx.arc(x,y,5,0,2*Math.PI);ctx.fill();}
+                    }
+                    
+                    // Draw axes
+                    ctx.strokeStyle='#333';ctx.lineWidth=2;
+                    ctx.beginPath();ctx.moveTo(p,h-p);ctx.lineTo(w-p,h-p);ctx.stroke();
+                    ctx.beginPath();ctx.moveTo(p,p);ctx.lineTo(p,h-p);ctx.stroke();
+                    
+                    // Labels
+                    ctx.fillStyle='#333';ctx.font='12px Arial';ctx.textAlign='center';
+                    ctx.fillText('m/z',w/2,h-10);
+                    ctx.save();ctx.translate(15,h/2);ctx.rotate(-Math.PI/2);ctx.fillText('Intensity',0,0);ctx.restore();
+                }
+                
+                c.addEventListener('mousemove',function(e){
+                    var rect=c.getBoundingClientRect(),x=e.clientX-rect.left,y=e.clientY-rect.top;
+                    var pw=w-p*2,ph=h-p*2;
+                    var found=-1;
+                    
+                    for(var i=0;i<spectrum.peaks.length;i++){
+                        var pk=spectrum.peaks[i],px=p+((pk.mz-minMz)/mzR)*pw,py=h-p-(pk.intensity/maxInt)*ph;
+                        if(Math.abs(x-px)<5&&Math.abs(y-py)<5){found=i;break;}
+                    }
+                    
+                    if(found!==-1){
+                        var pk=spectrum.peaks[found];
+                        tooltip.textContent='m/z: '+pk.mz.toFixed(4)+', Intensity: '+pk.intensity.toFixed(0);
+                        tooltip.style.display='block';tooltip.style.left=(e.clientX+10)+'px';tooltip.style.top=(e.clientY-25)+'px';
+                        if(found!==selectedPeak){selectedPeak=found;drawSpectrum();}
+                    }else{
+                        tooltip.style.display='none';if(selectedPeak!==-1){selectedPeak=-1;drawSpectrum();}
+                    }
+                });
+                
+                c.addEventListener('mouseleave',function(){tooltip.style.display='none';if(selectedPeak!==-1){selectedPeak=-1;drawSpectrum();}});
+                
+                drawSpectrum();
+            `;
+            
+            htmlLines.push('<script>' + scriptCode + '<' + '/script>');
+            htmlLines.push('</body></html>');
+
+            const html = htmlLines.join('');
+            const blob = new Blob([html], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = title + '_interactive.html';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showSuccess('Exported interactive spectrum with hover tooltips as HTML');
+        }
+
+        function exportSpectrumCSV() {
+            const spectrum = parser.getSpectrum(currentSpectrumIndex);
+            if (!spectrum || !spectrum.peaks || spectrum.peaks.length === 0) {
+                showMessage('No spectrum to export', 'error');
+                return;
+            }
+
+            const title = spectrum.metadata?.TITLE || 'spectrum_' + (currentSpectrumIndex + 1);
+            let csv = 'm/z,Intensity\n';
+            spectrum.peaks.forEach(peak => {
+                csv += peak.mz.toFixed(4) + ',' + peak.intensity.toFixed(2) + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = title + '_spectrum.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showSuccess('Exported spectrum as CSV');
+        }
+
+        // Register image export button listeners
+        const exportSpectrumPNGBtn = document.getElementById('exportSpectrumPNG');
+        const exportSpectrumSVGBtn = document.getElementById('exportSpectrumSVG');
+        const exportSpectrumHTMLBtn = document.getElementById('exportSpectrumHTML');
+        const exportSpectrumCSVBtn = document.getElementById('exportSpectrumCSV');
+
+        if (exportSpectrumPNGBtn) {
+            exportSpectrumPNGBtn.addEventListener('click', exportSpectrumPNG);
+        }
+        if (exportSpectrumSVGBtn) {
+            exportSpectrumSVGBtn.addEventListener('click', exportSpectrumSVG);
+        }
+        if (exportSpectrumHTMLBtn) {
+            exportSpectrumHTMLBtn.addEventListener('click', exportSpectrumHTML);
+        }
+        if (exportSpectrumCSVBtn) {
+            exportSpectrumCSVBtn.addEventListener('click', exportSpectrumCSV);
+        }
+
+        // Add event listeners for new export buttons
+        const exportGraphCSVBtn = document.getElementById('exportGraphCSV');
+        if (exportGraphCSVBtn) {
+            exportGraphCSVBtn.addEventListener('click', exportGraphCSV);
+        }
+
+        // Use event delegation for dynamically created buttons like exportPeaksCSV
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'exportPeaksCSV') {
+                exportPeaksCSV();
+            }
+        });
+
+        const exportDistributionPNGBtn = document.getElementById('exportDistributionPNG');
+        if (exportDistributionPNGBtn) {
+            exportDistributionPNGBtn.addEventListener('click', exportDistributionPNG);
+        }
+
+        const exportDistributionSVGBtn = document.getElementById('exportDistributionSVG');
+        if (exportDistributionSVGBtn) {
+            exportDistributionSVGBtn.addEventListener('click', exportDistributionSVG);
+        }
+
+        const exportDistributionHTMLBtn = document.getElementById('exportDistributionHTML');
+        if (exportDistributionHTMLBtn) {
+            exportDistributionHTMLBtn.addEventListener('click', exportDistributionHTML);
+        }
+
+        const exportDistributionCSVBtn = document.getElementById('exportDistributionCSV');
+        if (exportDistributionCSVBtn) {
+            exportDistributionCSVBtn.addEventListener('click', exportDistributionCSV);
+        }
+
+        // Handle window resize - redraw distribution canvas
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const canvas = document.getElementById('distributionCanvas');
+                const statsData = statsPanel.getStatistics();
+                if (canvas && statsData && statsData.peakDistribution && statsData.peakDistribution.length > 0) {
+                    renderDistributionCanvas(canvas, statsData.peakDistribution);
+                }
+            }, 300); // Debounce resize events
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MGFView.js Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2a2a2a 0%, #444 100%);
+            color: white;
+            padding: 40px 60px;
+            border-bottom: 4px solid #555;
+        }
+
+        header h1 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 .logo {
+            height: 42px;
+            width: 42px;
+            object-fit: contain;
+        }
+
+        header .tagline {
+            font-size: 16px;
+            color: #ccc;
+            font-weight: 300;
+            margin-bottom: 15px;
+        }
+
+        header .header-links {
+            font-size: 14px;
+            margin: 0;
+            color: #ddd;
+        }
+
+        header .header-link {
+            color: #fff;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        header .header-link:hover {
+            color: #aaa;
+        }
+
+        nav {
+            background: #999;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid #555;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        nav li {
+            margin: 0;
+        }
+
+        nav a {
+            display: block;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.2s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        nav a:hover {
+            background: #555;
+        }
+
+        .content {
+            padding: 40px 60px;
+        }
+
+        section {
+            margin-bottom: 60px;
+        }
+
+        h2 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #555;
+        }
+
+        h3 {
+            color: #444;
+            font-size: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        h4 {
+            color: #555;
+            font-size: 16px;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: #555;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #999;
+            color: white;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .feature-card {
+            background: #f9f9f9;
+            padding: 20px;
+            border-left: 4px solid #999;
+            border-radius: 4px;
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #444;
+        }
+
+        pre {
+            background: #2a2a2a;
+            color: #e8e8e8;
+            padding: 20px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border-left: 4px solid #999;
+        }
+
+        pre code {
+            background: none;
+            color: #e8e8e8;
+            padding: 0;
+        }
+
+        .api-method {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .api-method .signature {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .api-method .description {
+            color: #999;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .api-method .params {
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .api-method .params dt {
+            font-weight: 600;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        .api-method .params dd {
+            color: #999;
+            margin-left: 20px;
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #999;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .note {
+            background: #f5f5f5;
+            border-left: 4px solid #888;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .note strong {
+            color: #333;
+        }
+
+        footer {
+            background: #2a2a2a;
+            color: #e8e8e8;
+            text-align: center;
+            padding: 30px;
+            font-size: 14px;
+        }
+
+        footer a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        footer a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            header, .content {
+                padding: 30px 20px;
+            }
+
+            nav a {
+                padding: 12px 15px;
+                font-size: 13px;
+            }
+
+            h1 {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><img src="../logo.jpg" alt="MGFView Logo" class="logo"> MGFView.js</h1>
+            <p class="tagline">Browser-Native Mass Spectrometry File Viewer</p>
+            <p class="header-links">
+                <a href="https://github.com/saurabhgayali/MGFView.js" target="_blank" class="header-link">GitHub Repository</a> | 
+                <a href="../example.html" class="header-link">Live Demo</a> | 
+                <a href="../index.html" class="header-link">Home</a>
+            </p>
+            <div style="margin-top: 15px;">
+                <span class="badge">Version 1.0.0</span>
+                <span class="badge">Zero Dependencies</span>
+                <span class="badge">MIT License</span>
+            </div>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#installation">Installation</a></li>
+                <li><a href="#api">API Reference</a></li>
+                <li><a href="#usage">Usage Examples</a></li>
+                <li><a href="#workflow">Workflow</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <section id="overview">
+                <h2>Overview</h2>
+                <p>MGFView.js is a lightweight JavaScript library for parsing, viewing, and analyzing Mascot Generic Format (MGF) mass spectrometry files directly in the browser. It requires no build tools, no external dependencies, and works with vanilla JavaScript in modern web browsers.</p>
+
+                <h3>Key Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>MGF Parsing</h4>
+                        <p>Robust parsing engine with comprehensive error handling, whitespace normalization, and vendor-specific field support.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Interactive Visualization</h4>
+                        <p>Canvas-based spectrum plots with zoom, pan, peak selection, and 4x resolution scaling for high-quality exports.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Search &amp; Filter</h4>
+                        <p>Multi-criteria search including title, precursor mass, charge state, retention time, and custom metadata fields.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Statistical Analysis</h4>
+                        <p>Automated calculation of distributions, histograms, and summary statistics for peak counts, masses, and charges.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Multi-Format Export</h4>
+                        <p>Export to JSON, CSV, MGF, PNG (4x), SVG, and interactive HTML with full metadata preservation.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>Plugin System</h4>
+                        <p>Extensible architecture with lifecycle hooks for custom processing, validation, and export formats.</p>
+                    </div>
+                </div>
+
+                <h3>Input Formats Supported</h3>
+                <ul>
+                    <li>Raw MGF strings</li>
+                    <li>File uploads (File/Blob objects)</li>
+                    <li>Remote URLs (HTTP/HTTPS)</li>
+                    <li>Pre-parsed JavaScript objects</li>
+                    <li>Arrays of spectrum objects</li>
+                </ul>
+
+                <h3>Output Formats</h3>
+                <ul>
+                    <li><strong>JSON</strong> - Complete spectrum data with metadata</li>
+                    <li><strong>CSV</strong> - Tabular format with customizable columns</li>
+                    <li><strong>MGF</strong> - Reconstruct original Mascot format</li>
+                    <li><strong>PNG</strong> - High-resolution plot images (4x scaling)</li>
+                    <li><strong>SVG</strong> - Scalable vector graphics with embedded data</li>
+                </ul>
+            </section>
+
+            <section id="architecture">
+                <h2>Architecture</h2>
+                <p>MGFView.js follows a modular architecture with loosely-coupled components. Each module is self-contained and can be used independently or as part of the complete library.</p>
+
+                <h3>Core Components</h3>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Module</th>
+                            <th>File</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>MGFParser</strong></td>
+                            <td>parser.js</td>
+                            <td>Parses MGF files into structured spectrum objects</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MGFViewer</strong></td>
+                            <td>viewer.js</td>
+                            <td>High-level API for loading and displaying spectra</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spectrum</strong></td>
+                            <td>spectrum.js</td>
+                            <td>Data model representing a single spectrum</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SpectrumPlot</strong></td>
+                            <td>plot.js</td>
+                            <td>Canvas-based visualization with interactive controls</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SearchFilter</strong></td>
+                            <td>search.js</td>
+                            <td>Multi-criteria search and filtering engine</td>
+                        </tr>
+                        <tr>
+                            <td><strong>StatisticsPanel</strong></td>
+                            <td>stats.js</td>
+                            <td>Statistical analysis and distribution generation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ExportManager</strong></td>
+                            <td>export.js</td>
+                            <td>Multi-format export functionality</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Plugin System</strong></td>
+                            <td>plugin.js</td>
+                            <td>Extensibility framework with lifecycle hooks</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Utilities</strong></td>
+                            <td>utils.js</td>
+                            <td>Common helper functions and validators</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MGFView</strong></td>
+                            <td>mgfview.js</td>
+                            <td>Library entry point and factory methods</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Data Flow</h3>
+                <p>The typical data flow follows this pattern:</p>
+                <ol>
+                    <li><strong>Input</strong> - File, URL, or string passed to MGFParser</li>
+                    <li><strong>Parsing</strong> - MGFParser extracts spectra and metadata</li>
+                    <li><strong>Storage</strong> - Spectra stored as Spectrum objects</li>
+                    <li><strong>Processing</strong> - Optional filtering, searching, or statistical analysis</li>
+                    <li><strong>Visualization</strong> - SpectrumPlot renders selected spectrum</li>
+                    <li><strong>Export</strong> - ExportManager converts to desired format</li>
+                </ol>
+            </section>
+
+            <section id="installation">
+                <h2>Installation</h2>
+                
+                <h3>Quick Start (Recommended)</h3>
+                <p>Include the CSS and main library file - dependencies are auto-loaded:</p>
+                
+<pre><code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+    &lt;link rel="stylesheet" href="path/to/css/mgfview.css"&gt;
+    &lt;script src="path/to/src/mgfview.js"&gt;&lt;/script&gt;
+    
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div id="viewer"&gt;&lt;/div&gt;
+    &lt;script&gt;
+        const viewer = new MGFViewer('#viewer');
+    &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+                <h3>Advanced: Manual Component Loading</h3>
+                <p>For fine-grained control, load components individually in order:</p>
+                
+<pre><code>&lt;script src="path/to/src/utils.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/parser.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/spectrum.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/plot.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/viewer.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/search.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/stats.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/export.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/plugin.js"&gt;&lt;/script&gt;
+&lt;script src="path/to/src/mgfview.js"&gt;&lt;/script&gt;</code></pre>
+
+                <p><strong>Usage:</strong> Each component exports to the global <code>window</code> object and can be used independently:</p>
+
+<pre><code>const parser = new MGFParser();
+const search = new SearchFilter();
+const stats = new StatisticsPanel();
+const exporter = new ExportManager();</code></pre>
+
+                <div class="note">
+                    <strong>Note:</strong> The library requires modern browser features including ES6+ (classes, arrow functions, async/await), Canvas API, and File API. Supported in Chrome 60+, Firefox 60+, Safari 12+, Edge 79+.
+                </div>
+            </section>
+
+            <section id="api">
+                <h2>API Reference</h2>
+
+                <h3>MGFParser</h3>
+                <p>Core parsing engine for MGF file format.</p>
+
+                <div class="api-method">
+                    <div class="signature">constructor()</div>
+                    <div class="description">Creates a new parser instance. No parameters required.</div>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">async load(input)</div>
+                    <div class="description">Auto-detects input type and loads MGF data.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>input</code> - String (URL or MGF content), File/Blob object, or pre-parsed Object/Array</dd>
+                        <dt>Returns:</dt>
+                        <dd>Promise resolving to <code>{count, spectra, metadata}</code></dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">loadString(mgfString)</div>
+                    <div class="description">Parses MGF format string synchronously.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>mgfString</code> - Raw MGF file content</dd>
+                        <dt>Returns:</dt>
+                        <dd><code>{count, spectra, metadata}</code></dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">async loadUrl(url)</div>
+                    <div class="description">Fetches and parses MGF file from URL.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>url</code> - HTTP/HTTPS URL or relative path</dd>
+                        <dt>Returns:</dt>
+                        <dd>Promise resolving to parsed result</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">async loadBlob(blob)</div>
+                    <div class="description">Reads and parses File or Blob object.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>blob</code> - File or Blob object</dd>
+                        <dt>Returns:</dt>
+                        <dd>Promise resolving to parsed result</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">getSpectra()</div>
+                    <div class="description">Returns array of all parsed spectra.</div>
+                    <dl class="params">
+                        <dt>Returns:</dt>
+                        <dd>Array of Spectrum objects</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">getSpectrum(index)</div>
+                    <div class="description">Returns single spectrum by index.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>index</code> - Zero-based spectrum index</dd>
+                        <dt>Returns:</dt>
+                        <dd>Spectrum object</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">getSpectrumCount()</div>
+                    <div class="description">Returns total number of spectra.</div>
+                    <dl class="params">
+                        <dt>Returns:</dt>
+                        <dd>Integer count</dd>
+                    </dl>
+                </div>
+
+                <h3>SpectrumPlot</h3>
+                <p>Canvas-based spectrum visualization with interactive controls.</p>
+
+                <div class="api-method">
+                    <div class="signature">constructor(container, options)</div>
+                    <div class="description">Creates spectrum plot in specified container.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>container</code> - DOM element or CSS selector string</dd>
+                        <dd><code>options</code> - Configuration object (colors, dimensions, margins)</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">setSpectrum(spectrum)</div>
+                    <div class="description">Loads and displays a spectrum.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>spectrum</code> - Spectrum object with metadata and peaks</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">draw()</div>
+                    <div class="description">Redraws the plot canvas. Called automatically after changes.</div>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">exportPNG(scale)</div>
+                    <div class="description">Exports current plot as PNG image.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>scale</code> - Resolution multiplier (default: 4)</dd>
+                        <dt>Returns:</dt>
+                        <dd>Base64 PNG data URL</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">exportSVG()</div>
+                    <div class="description">Exports current plot as SVG.</div>
+                    <dl class="params">
+                        <dt>Returns:</dt>
+                        <dd>SVG markup string</dd>
+                    </dl>
+                </div>
+
+                <h3>SearchFilter</h3>
+                <p>Advanced search and filtering for mass spectrometry data.</p>
+
+                <div class="api-method">
+                    <div class="signature">constructor(options)</div>
+                    <div class="description">Creates filter instance with configuration.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>options</code> - <code>{caseSensitive, fuzzyMatch}</code></dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">filter(spectra, criteria)</div>
+                    <div class="description">Apply multiple filter criteria simultaneously.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>spectra</code> - Array of spectra to filter</dd>
+                        <dd><code>criteria</code> - Object with filter conditions (title, mass, charge, rt, metadata)</dd>
+                        <dt>Returns:</dt>
+                        <dd><code>{matched, excluded, metadata}</code></dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">searchByTitle(spectra, query)</div>
+                    <div class="description">Search spectra by title substring.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>query</code> - Search string</dd>
+                        <dt>Returns:</dt>
+                        <dd>Array of matching spectra</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">filterByCharge(spectra, charges)</div>
+                    <div class="description">Filter by charge state.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>charges</code> - Array of allowed charge values</dd>
+                        <dt>Returns:</dt>
+                        <dd>Filtered spectra array</dd>
+                    </dl>
+                </div>
+
+                <h3>StatisticsPanel</h3>
+                <p>Statistical analysis and distribution visualization.</p>
+
+                <div class="api-method">
+                    <div class="signature">constructor(options)</div>
+                    <div class="description">Creates statistics panel.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>options</code> - <code>{histogramBins, colors}</code></dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">analyze(spectra)</div>
+                    <div class="description">Analyzes array of spectra and generates statistics.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>spectra</code> - Array of spectrum objects</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">getStatistics()</div>
+                    <div class="description">Returns computed statistics object.</div>
+                    <dl class="params">
+                        <dt>Returns:</dt>
+                        <dd>Statistics summary with distributions, min/max/mean values</dd>
+                    </dl>
+                </div>
+
+                <h3>ExportManager</h3>
+                <p>Multi-format data export functionality.</p>
+
+                <div class="api-method">
+                    <div class="signature">exportJSON(spectra, pretty)</div>
+                    <div class="description">Exports spectra as JSON string.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>spectra</code> - Array of spectra</dd>
+                        <dd><code>pretty</code> - Format with indentation (default: true)</dd>
+                        <dt>Returns:</dt>
+                        <dd>JSON string</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">exportCSV(spectra, options)</div>
+                    <div class="description">Exports spectra as CSV.</div>
+                    <dl class="params">
+                        <dt>Parameters:</dt>
+                        <dd><code>options</code> - <code>{includePeaks, includeMetadata, delimiter}</code></dd>
+                        <dt>Returns:</dt>
+                        <dd>CSV formatted string</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">exportMGF(spectra)</div>
+                    <div class="description">Reconstructs MGF format from parsed spectra.</div>
+                    <dl class="params">
+                        <dt>Returns:</dt>
+                        <dd>MGF formatted string</dd>
+                    </dl>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">downloadJSON(spectra, filename)</div>
+                    <div class="description">Triggers browser download of JSON file.</div>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">downloadCSV(spectra, filename)</div>
+                    <div class="description">Triggers browser download of CSV file.</div>
+                </div>
+
+                <div class="api-method">
+                    <div class="signature">downloadMGF(spectra, filename)</div>
+                    <div class="description">Triggers browser download of MGF file.</div>
+                </div>
+            </section>
+
+            <section id="usage">
+                <h2>Usage Examples</h2>
+
+                <h3>Basic File Loading</h3>
+<pre><code>// Create parser instance
+const parser = new MGFParser();
+
+// Load from file input
+const fileInput = document.getElementById('file-input');
+fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    const result = await parser.loadBlob(file);
+    console.log(`Loaded ${result.count} spectra`);
+});
+
+// Load from URL
+await parser.loadUrl('path/to/spectra.mgf');
+
+// Load from string
+const mgfString = `BEGIN IONS
+TITLE=Spectrum 1
+CHARGE=2+
+PEPMASS=445.2
+100.5 1234.5
+200.7 5678.9
+END IONS`;
+parser.loadString(mgfString);</code></pre>
+
+                <h3>Visualization</h3>
+<pre><code>// Create plot container
+const plot = new SpectrumPlot('#plot-container', {
+    width: 800,
+    height: 400,
+    colors: {
+        peak: '#555',
+        selected: '#000'
+    }
+});
+
+// Display first spectrum
+const spectrum = parser.getSpectrum(0);
+plot.setSpectrum(spectrum);
+
+// Export as image
+const pngData = plot.exportPNG(4); // 4x resolution
+const svgMarkup = plot.exportSVG();</code></pre>
+
+                <h3>Search and Filter</h3>
+<pre><code>const search = new SearchFilter({
+    caseSensitive: false,
+    fuzzyMatch: false
+});
+
+const spectra = parser.getSpectra();
+
+// Search by title
+const results = search.searchByTitle(spectra, 'peptide');
+
+// Complex filtering
+const filtered = search.filter(spectra, {
+    title: 'experiment',
+    chargeLow: 2,
+    chargeHigh: 3,
+    massLow: 400,
+    massHigh: 1500,
+    rtMin: 10.0,
+    rtMax: 30.0
+});
+
+console.log(`Matched: ${filtered.matched.length}`);
+console.log(`Excluded: ${filtered.excluded.length}`);</code></pre>
+
+                <h3>Statistical Analysis</h3>
+<pre><code>const stats = new StatisticsPanel({
+    histogramBins: 20
+});
+
+// Analyze all spectra
+stats.analyze(parser.getSpectra());
+
+// Get statistics object
+const statistics = stats.getStatistics();
+console.log(statistics);
+
+// Export statistics
+const jsonStats = stats.exportJSON();
+const csvStats = stats.exportCSV();</code></pre>
+
+                <h3>Data Export</h3>
+<pre><code>const exporter = new ExportManager();
+const spectra = parser.getSpectra();
+
+// Export to different formats
+const json = exporter.exportJSON(spectra);
+const csv = exporter.exportCSV(spectra);
+const mgf = exporter.exportMGF(spectra);
+
+// Trigger downloads
+exporter.downloadJSON(spectra, 'data.json');
+exporter.downloadCSV(spectra, 'data.csv');
+exporter.downloadMGF(spectra, 'reconstructed.mgf');</code></pre>
+
+                <h3>Complete Workflow</h3>
+<pre><code>// Initialize components
+const parser = new MGFParser();
+const search = new SearchFilter();
+const stats = new StatisticsPanel();
+const exporter = new ExportManager();
+const plot = new SpectrumPlot('#plot');
+
+// Load file
+await parser.loadUrl('spectra.mgf');
+
+// Filter spectra
+const filtered = search.filter(parser.getSpectra(), {
+    chargeLow: 2,
+    chargeLow: 4,
+    massLow: 500,
+    massHigh: 2000
+});
+
+// Analyze filtered results
+stats.analyze(filtered.matched.map(r => r.spectrum));
+
+// Display first result
+if (filtered.matched.length > 0) {
+    plot.setSpectrum(filtered.matched[0].spectrum);
+}
+
+// Export filtered data
+exporter.downloadCSV(
+    filtered.matched.map(r => r.spectrum),
+    'filtered_spectra.csv'
+);</code></pre>
+            </section>
+
+            <section id="workflow">
+                <h2>Processing Workflow</h2>
+
+                <h3>1. File Loading</h3>
+                <p>MGFParser accepts multiple input types and automatically detects the format:</p>
+                <ul>
+                    <li><strong>String</strong> - Checks if URL pattern, fetches if true, otherwise parses as MGF content</li>
+                    <li><strong>File/Blob</strong> - Reads using FileReader API, then parses content</li>
+                    <li><strong>Object</strong> - Accepts pre-parsed spectrum objects with <code>{metadata, peaks}</code> structure</li>
+                    <li><strong>Array</strong> - Accepts array of pre-parsed spectrum objects</li>
+                </ul>
+
+                <h3>2. Parsing Process</h3>
+                <p>The parser follows these steps:</p>
+                <ol>
+                    <li>Split input into individual spectrum blocks (BEGIN IONS...END IONS)</li>
+                    <li>Extract global file metadata (before first BEGIN IONS)</li>
+                    <li>For each spectrum:
+                        <ul>
+                            <li>Parse metadata key-value pairs (TITLE, CHARGE, PEPMASS, etc.)</li>
+                            <li>Parse peak list (m/z intensity pairs)</li>
+                            <li>Validate data structure</li>
+                            <li>Create Spectrum object</li>
+                        </ul>
+                    </li>
+                    <li>Store in internal array</li>
+                </ol>
+
+                <h3>3. Data Structures</h3>
+                <p>Internal representation of a spectrum:</p>
+<pre><code>{
+    metadata: {
+        TITLE: "Spectrum name",
+        CHARGE: "2+",
+        PEPMASS: "445.234",
+        RTINSECONDS: "1234.5",
+        ...customFields
+    },
+    peaks: [
+        {mz: 100.5, intensity: 1234.5},
+        {mz: 200.7, intensity: 5678.9},
+        ...
+    ]
+}</code></pre>
+
+                <h3>4. Visualization Process</h3>
+                <p>SpectrumPlot rendering pipeline:</p>
+                <ol>
+                    <li>Calculate canvas dimensions with devicePixelRatio scaling</li>
+                    <li>Determine plot area (subtract margins for axes)</li>
+                    <li>Calculate data ranges (min/max m/z and intensity)</li>
+                    <li>Draw grid and axes with labels</li>
+                    <li>Transform peak coordinates to canvas space</li>
+                    <li>Render peaks as vertical lines with optional selection highlights</li>
+                    <li>Handle mouse events for hover and selection</li>
+                </ol>
+
+                <h3>5. Search Algorithm</h3>
+                <p>SearchFilter applies filters in sequence:</p>
+                <ol>
+                    <li>Start with all spectra</li>
+                    <li>Apply title filter (substring match or regex)</li>
+                    <li>Apply charge filter (exact match or range)</li>
+                    <li>Apply precursor mass filter (range with tolerance)</li>
+                    <li>Apply retention time filter (min/max range)</li>
+                    <li>Apply custom metadata filters</li>
+                    <li>Return matched and excluded arrays with metadata</li>
+                </ol>
+
+                <h3>6. Statistical Calculations</h3>
+                <p>StatisticsPanel computes:</p>
+                <ul>
+                    <li><strong>Distributions</strong> - Binned histograms for peaks, masses, charges, retention times</li>
+                    <li><strong>Summary Stats</strong> - Min, max, mean, median, standard deviation</li>
+                    <li><strong>Counts</strong> - Total spectra, total peaks, peaks per spectrum</li>
+                    <li><strong>Quality Metrics</strong> - Coverage, intensity ranges</li>
+                </ul>
+
+                <h3>7. Export Pipeline</h3>
+                <p>ExportManager conversion process:</p>
+                <ol>
+                    <li><strong>JSON</strong> - Serialize spectrum objects directly</li>
+                    <li><strong>CSV</strong> - Flatten metadata to columns, optionally include peaks as rows</li>
+                    <li><strong>MGF</strong> - Reconstruct text format with BEGIN/END IONS blocks</li>
+                    <li><strong>PNG</strong> - Render to temporary canvas at high resolution, export as base64</li>
+                    <li><strong>SVG</strong> - Generate XML markup with embedded spectrum data</li>
+                </ol>
+            </section>
+        </div>
+
+        <footer>
+            <p>MGFView.js &copy; 2026 | MIT License</p>
+            <p>Developed by Saurabh Gayali | <a href="mailto:saurabh.gayali@gmail.com" style="color: #ccc;">saurabh.gayali@gmail.com</a></p>
+            <p><a href="https://github.com/saurabhgayali/MGFView.js" target="_blank">GitHub Repository</a> | <a href="../example.html">Live Demo</a> | <a href="../index.html">Home</a></p>
+        </footer>
+    </div>
+</body>
+</html>
