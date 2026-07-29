@@ -5,6 +5,11 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21682475.svg)](https://doi.org/10.5281/zenodo.21682475)
+
+
+
+
 
 MGFView.js is a lightweight, zero-dependency JavaScript library for viewing and analyzing Mascot Generic Format (MGF) mass spectrometry files directly in the browser. Designed for proteomics and metabolomics researchers, it provides instant access to spectral data without server uploads or specialized software installation.
 
