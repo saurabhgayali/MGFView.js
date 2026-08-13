@@ -1,0 +1,68 @@
+{
+  "name": "@saurabhgayali/mgfview",
+  "version": "0.1.0",
+  "description": "Reusable Node.js/TypeScript npm package for MGF mass spectrometry file parsing, analysis, filtering, and visualization",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/core",
+    "README.md",
+    "LICENSE",
+    "ARCHITECTURE.md"
+  ],
+  "scripts": {
+    "build": "node build/build.js",
+    "build:core": "node build/build-core.js",
+    "build:browser": "node build/build-browser.js",
+    "test": "node test/core.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mgf",
+    "mass-spectrometry",
+    "proteomics",
+    "metabolomics",
+    "spectrum",
+    "parser",
+    "viewer",
+    "analytics",
+    "bioinformatics"
+  ],
+  "author": "Saurabh Gayali",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/saurabhgayali/MGFView.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saurabhgayali/MGFView.js/issues"
+  },
+  "homepage": "https://github.com/saurabhgayali/MGFView.js#readme",
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "browserslist": [
+    "chrome >= 60",
+    "firefox >= 60",
+    "safari >= 12",
+    "edge >= 79"
+  ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    },
+    "./core": {
+      "require": "./dist/core/index.js",
+      "import": "./dist/core/index.mjs",
+      "types": "./dist/core/index.d.ts"
+    },
+    "./browser": {
+      "browser": "./dist/browser/mgfview.js"
+    }
+  },
+  "module": "dist/index.mjs",
+  "browser": "dist/browser/mgfview.js"
+}

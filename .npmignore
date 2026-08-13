@@ -1,0 +1,42 @@
+# Development and tooling
+build/
+test/
+example/
+doc/
+.git/
+.gitignore
+
+# Build artifacts
+*.tgz
+*.tar.gz
+
+# Source files (only dist needed)
+src/
+
+# Demo and documentation files
+example.html
+index.html
+*.md
+!README.md
+!ARCHITECTURE.md
+!LICENSE
+
+# Other
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.DS_Store
+Thumbs.db
+
+# CSS (user should include separately)
+# Keep css/ commented out if we want to include styles in npm package
+# css/
+
+# CI/CD
+.github/
+.travis.yml
+.circleci/
+appveyor.yml
+azure-pipelines.yml

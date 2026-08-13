@@ -95,9 +95,104 @@ The entire application is self-contained in a single HTML file (~250KB) with emb
 
 ---
 
-## Quick Start
+## NPM Package (Reusable Core)
+
+MGFView.js is now available as an **npm package** for Node.js and server-side environments. The core library contains all parsing, analysis, and filtering functionality without browser dependencies.
 
 ### Installation
+```bash
+npm install @saurabhgayali/mgfview
+```
+
+### Node.js Usage - Basic Example
+```javascript
+const { MGFParser, Spectrum, SearchFilter, ExportManager } = 
+  require('@saurabhgayali/mgfview');
+
+// Parse an MGF file
+const parser = new MGFParser();
+const result = await parser.load('data/spectra.mgf');
+
+console.log(`Loaded ${result.count} spectra`);
+
+// Access first spectrum
+const spectrum = result.spectra[0];
+console.log('Title:', spectrum.getTitle());
+console.log('Precursor m/z:', spectrum.getPrecursorMass());
+console.log('Peaks:', spectrum.getPeakCount());
+
+// Filter spectra
+const filter = new SearchFilter();
+const filtered = filter.filter(result.spectra, {
+  massLow: 400,
+  massHigh: 1500,
+  chargeLow: 2,
+  chargeHigh: 3
+});
+
+console.log(`Matched: ${filtered.matched.length}`);
+
+// Export to JSON
+const exporter = new ExportManager();
+const json = exporter.exportJSON(filtered.matched.map(m => m.spectrum));
+console.log(json);
+```
+
+### Node.js Usage - Server Integration
+```javascript
+// MGFView-MCP Server example
+const { MGFParser, StatisticsPanel, ExportManager } = require('@saurabhgayali/mgfview');
+
+async function analyzeSpectra(filePath) {
+  const parser = new MGFParser();
+  const result = await parser.load(filePath);
+  
+  const stats = new StatisticsPanel();
+  const analysis = stats.analyze(result.spectra);
+  
+  return {
+    totalSpectra: analysis.spectraCount,
+    totalPeaks: analysis.totalPeaks,
+    chargeDistribution: analysis.charges,
+    massRange: {
+      min: Math.min(...result.spectra.map(s => s.getPrecursorMass() || 0)),
+      max: Math.max(...result.spectra.map(s => s.getPrecursorMass() || 0))
+    }
+  };
+}
+```
+
+### Core API Reference
+
+**Available Classes:**
+- `MGFParser` - Parse MGF files from various sources
+- `Spectrum` - Individual spectrum data and analysis methods
+- `SearchFilter` - Filter and search spectra
+- `StatisticsPanel` - Generate statistical analysis
+- `ExportManager` - Export spectra to JSON/CSV/MGF
+- `MGFUtils` - Utility formatting functions
+- `ViewerState` - State management
+- `PluginSystem` - Extensible plugin architecture
+
+For detailed API documentation, see [ARCHITECTURE.md](ARCHITECTURE.md) and inline code documentation.
+
+### Running Tests
+```bash
+npm test
+```
+
+### Building from Source
+```bash
+npm run build
+npm run build:core      # Build core only
+npm run build:browser   # Build browser bundle only
+```
+
+---
+
+## Browser Usage
+
+### Quick Start - Browser Installation
 ```html
 <!DOCTYPE html>
 <html>
@@ -108,7 +203,7 @@ The entire application is self-contained in a single HTML file (~250KB) with emb
     <div id="viewer"></div>
     
     <!-- Single file - all modules included -->
-    <script src="path/to/mgfview.js"></script>
+    <script src="path/to/dist/browser/mgfview.js"></script>
     
     <script>
         const viewer = new MGFViewer('#viewer');
