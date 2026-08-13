@@ -162,6 +162,24 @@ async function analyzeSpectra(filePath) {
 }
 ```
 
+### Node.js Usage - ESM (ES Modules)
+```javascript
+// ES Module import syntax (supported in Node.js 14+)
+import { MGFParser, Spectrum, SearchFilter, ExportManager } 
+  from '@saurabhgayali/mgfview';
+
+const parser = new MGFParser();
+const result = await parser.load('data/spectra.mgf');
+
+console.log(`Loaded ${result.count} spectra`);
+
+// Works identically to CommonJS version
+const filtered = new SearchFilter().filter(result.spectra, {
+  massLow: 400,
+  massHigh: 1500
+});
+```
+
 ### Core API Reference
 
 **Available Classes:**
@@ -273,15 +291,38 @@ Tested with real-world proteomics datasets:
 ## Project Structure
 
 ```
-MGFviewjs/
-├── src/                   # Core library (10 modules)
-│   ├── parser.js          # MGF parsing engine
-│   ├── viewer.js          # High-level viewer API
-│   ├── plot.js            # Canvas visualization
-│   ├── search.js          # Multi-criteria filtering
-│   ├── stats.js           # Statistical analysis
-│   ├── export.js          # Multi-format export
-│   └── ...
+MGFView.js/
+├── src/
+│   ├── core/              # Reusable Node.js/browser core (8 modules)
+│   │   ├── parser.js      # MGF parsing engine
+│   │   ├── spectrum.js    # Spectrum data abstraction
+│   │   ├── search.js      # Advanced filtering and search
+│   │   ├── stats.js       # Statistical analysis
+│   │   ├── export.js      # Multi-format export (JSON, CSV, MGF)
+│   │   ├── utils.js       # Utility functions
+│   │   ├── plugin.js      # Plugin system and default plugins
+│   │   ├── state.js       # State management
+│   │   └── index.js       # Core library entry point
+│   ├── browser/           # Browser-specific components
+│   │   └── (browser-only UI components)
+│   ├── viewer/            # Viewer implementation
+│   │   ├── viewer.js      # Main viewer class
+│   │   ├── uibuilder.js   # UI building utilities
+│   │   ├── components.js  # UI components
+│   │   └── plot.js        # Canvas visualization
+│   └── mgfview.js         # Main entry point for browser bundle
+├── build/                 # Build scripts
+│   ├── build.js           # Main build orchestrator
+│   ├── build-core.js      # Core library build (CommonJS + ESM)
+│   └── build-browser.js   # Browser bundle build
+├── dist/                  # Built distribution (generated)
+│   ├── index.js           # CommonJS entry point
+│   ├── index.mjs          # ESM entry point
+│   ├── index.d.ts         # TypeScript definitions
+│   ├── core/              # Core modules (CommonJS and ESM)
+│   └── browser/           # Browser bundle
+├── test/
+│   └── core.test.js       # Core library tests
 ├── css/
 │   └── mgfview.css        # Professional styling
 ├── doc/
@@ -289,10 +330,15 @@ MGFviewjs/
 ├── example/
 │   ├── small.mgf          # Test datasets
 │   ├── medium.mgf
-│   └── large.mgf
+│   ├── large.mgf
+│   └── ...
 ├── example.html           # Interactive demo (download for offline use)
+├── package.json           # NPM package configuration
+├── ARCHITECTURE.md        # Detailed architecture documentation
 └── README.md
 ```
+
+**Package Contents**: When published to npm, only the `dist/` directory and documentation files are included. The `src/` directory is excluded to reduce package size.
 
 ---
 
@@ -310,7 +356,7 @@ If you use MGFView.js in your research, please cite:
 
 ```
 MGFView.js: Browser-Native Mass Spectrometry File Viewer
-Version 1.0.0
+Version 0.1.0
 https://github.com/saurabhgayali/MGFView.js
 ```
 
