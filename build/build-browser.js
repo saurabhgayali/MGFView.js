@@ -10,6 +10,11 @@
 const fs = require('fs');
 const path = require('path');
 
+// Read version from package.json
+const packageJsonPath = path.join(__dirname, '..', 'package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+const version = packageJson.version;
+
 // Ensure dist directory exists
 const distDir = path.join(__dirname, '..', 'dist', 'browser');
 if (!fs.existsSync(distDir)) {
@@ -36,7 +41,7 @@ const modules = [
 // Create bundle header
 const header = `/**
  * ===============================================================
- * MGFView.js v1.0.0 - Single-file Distribution
+ * MGFView.js v${version} - Single-file Distribution
  * ===============================================================
  * 
  * Complete client-side JavaScript library for viewing and

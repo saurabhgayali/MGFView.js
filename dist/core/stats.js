@@ -415,9 +415,15 @@ class StatisticsPanel {
         }
 
         values.forEach(value => {
-            const binIndex = Math.floor((value - min) / binSize);
-            const index = Math.min(binIndex, numBins - 1);
-            bins[index].count++;
+            // Handle case where all values are identical (binSize === 0)
+            let index = 0;
+            if (binSize > 0) {
+                const binIndex = Math.floor((value - min) / binSize);
+                index = Math.min(binIndex, numBins - 1);
+            }
+            if (index >= 0 && index < bins.length) {
+                bins[index].count++;
+            }
         });
 
         return bins.filter(b => b.count > 0);

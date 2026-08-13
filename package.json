@@ -6,7 +6,6 @@
   "types": "dist/index.d.ts",
   "files": [
     "dist",
-    "src/core",
     "README.md",
     "LICENSE",
     "ARCHITECTURE.md"
@@ -52,15 +51,18 @@
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.mjs",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./core": {
       "require": "./dist/core/index.js",
       "import": "./dist/core/index.mjs",
-      "types": "./dist/core/index.d.ts"
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
     },
     "./browser": {
-      "browser": "./dist/browser/mgfview.js"
+      "browser": "./dist/browser/mgfview.js",
+      "default": "./dist/browser/mgfview.js"
     }
   },
   "module": "dist/index.mjs",

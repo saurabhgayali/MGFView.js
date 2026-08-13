@@ -2,7 +2,7 @@
 
 **Browser-Native Mass Spectrometry File Viewer for Proteomics and Metabolomics Research**
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-0.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Dependencies](https://img.shields.io/badge/dependencies-zero-brightgreen)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21682475.svg)](https://doi.org/10.5281/zenodo.21682475)

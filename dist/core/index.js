@@ -11,7 +11,7 @@
  *   const MGFParser = window.MGFParser;
  *   const Spectrum = window.Spectrum;
  * 
- * @version 1.0.0
+ * @version 0.1.0
  * @license MIT
  */
 
@@ -44,7 +44,7 @@ const { Plugin, PluginSystem, MirrorPlotPlugin, SimilarityPlugin, AnnotationPlug
 const ViewerState = require(modulePath + 'state.js');
 
 // Library metadata
-const version = '1.0.0';
+const version = '0.1.0';
 const name = 'MGFView.js';
 
 /**
